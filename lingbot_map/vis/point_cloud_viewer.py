@@ -1168,11 +1168,15 @@ class PointCloudViewer:
         """Setup and run animation controls."""
         with self.server.gui.add_folder("Playback"):
             self.gui_timestep = self.server.gui.add_slider(
-                "Train Step", min=0, max=self.num_frames - 1, step=1, initial_value=0, disabled=False
+                "Train Step", min=0, max=self.num_frames - 1, step=1, 
+                # initial_value=0, 
+                initial_value=self.num_frames - 1, 
+                disabled=False
             )
             gui_next_frame = self.server.gui.add_button("Next Step", disabled=False)
             gui_prev_frame = self.server.gui.add_button("Prev Step", disabled=False)
-            gui_playing = self.server.gui.add_checkbox("Playing", True)
+            # gui_playing = self.server.gui.add_checkbox("Playing", True)
+            gui_playing = self.server.gui.add_checkbox("Playing", False)
             gui_framerate = self.server.gui.add_slider("FPS", min=1, max=60, step=0.1, initial_value=20)
             gui_framerate_options = self.server.gui.add_button_group("FPS options", ("10", "20", "30", "60"))
 

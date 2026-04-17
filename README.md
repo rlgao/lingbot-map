@@ -46,7 +46,8 @@ conda activate lingbot-map
 **2. Install PyTorch (CUDA 12.8)**
 
 ```bash
-pip install torch==2.9.1 torchvision==0.24.1 --index-url https://download.pytorch.org/whl/cu128
+# pip install torch==2.9.1 torchvision==0.24.1 --index-url https://download.pytorch.org/whl/cu128
+pip install torch==2.7.1 torchvision==0.22.1 --index-url https://download.pytorch.org/whl/cu118
 ```
 
 > For other CUDA versions, see [PyTorch Get Started](https://pytorch.org/get-started/locally/).

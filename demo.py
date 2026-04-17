@@ -230,6 +230,39 @@ def prepare_for_visualization(predictions, images=None):
 # Main
 # =============================================================================
 
+'''
+# Church scene
+python demo.py \
+    --model_path ckpt/lingbot-map.pt \
+    --image_folder example/church \
+    --use_sdpa \
+    --offload_to_cpu
+
+
+# Oxford scene with sky masking (outdoor)
+python demo.py \
+    --model_path ckpt/lingbot-map.pt \
+    --image_folder example/oxford \
+    --use_sdpa \
+    --offload_to_cpu \
+    --mode windowed \
+    --window_size 64 \
+    --overlap_size 16
+
+
+# University scene
+python demo.py \
+    --model_path ckpt/lingbot-map.pt \
+    --image_folder example/university4 \
+    --use_sdpa \
+    --offload_to_cpu \
+    --mode windowed \
+    --window_size 64 \
+    --overlap_size 16
+
+'''
+
+
 def main():
     parser = argparse.ArgumentParser(description="LingBot-MAP: Streaming 3D Reconstruction Demo")
 
@@ -246,8 +279,11 @@ def main():
     parser.add_argument("--patch_size", type=int, default=14)
 
     # Inference mode
-    parser.add_argument("--mode", type=str, default="streaming", choices=["streaming", "windowed"],
-                        help="streaming: frame-by-frame with KV cache; windowed: overlapping windows for long sequences")
+    parser.add_argument(
+        "--mode", type=str, 
+        default="streaming",
+        choices=["streaming", "windowed"],
+        help="streaming: frame-by-frame with KV cache; windowed: overlapping windows for long sequences")
 
     # Streaming options
     parser.add_argument("--enable_3d_rope", action="store_true", default=True)
@@ -269,7 +305,8 @@ def main():
         help="Offload per-frame predictions to CPU during inference to cut GPU peak memory. "
              "Use --no-offload_to_cpu to keep outputs on GPU.",
     )
-    # Windowed options
+
+    ###### Windowed options
     parser.add_argument("--window_size", type=int, default=64, help="Frames per window (windowed mode)")
     parser.add_argument("--overlap_size", type=int, default=16, help="Overlap between windows")
 
@@ -342,6 +379,8 @@ def main():
             f"alloc={torch.cuda.memory_allocated()/1e9:.2f} GB, "
             f"reserved={torch.cuda.memory_reserved()/1e9:.2f} GB"
         )
+    else:
+        print("No GPU available")
 
     if args.mode != "streaming" and args.keyframe_interval != 1:
         print("Warning: --keyframe_interval only applies to --mode streaming. Ignoring it for windowed inference.")
@@ -360,6 +399,7 @@ def main():
 
     with torch.no_grad(), torch.amp.autocast("cuda", dtype=dtype):
         if args.mode == "streaming":
+            # Direct Output Mode
             predictions = model.inference_streaming(
                 images,
                 num_scale_frames=args.num_scale_frames,
@@ -367,6 +407,7 @@ def main():
                 output_device=output_device,
             )
         else:  # windowed
+            # Visual Odometry (VO) Mode
             predictions = model.inference_windowed(
                 images,
                 window_size=args.window_size,
