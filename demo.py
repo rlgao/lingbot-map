@@ -238,7 +238,6 @@ python demo.py \
     --use_sdpa \
     --offload_to_cpu
 
-
 # Oxford scene with sky masking (outdoor)
 python demo.py \
     --model_path ckpt/lingbot-map.pt \
@@ -249,7 +248,6 @@ python demo.py \
     --window_size 64 \
     --overlap_size 16
 
-
 # University scene
 python demo.py \
     --model_path ckpt/lingbot-map.pt \
@@ -259,6 +257,19 @@ python demo.py \
     --mode windowed \
     --window_size 64 \
     --overlap_size 16
+
+
+# KITTI-360 scene
+python demo.py \
+    --model_path ckpt/lingbot-map.pt \
+    --image_folder /home/grl/datasets/KITTI-360/data_2d_raw/2013_05_28_drive_0000_sync/image_00/data_rect \
+    --stride 2 \
+    --use_sdpa \
+    --offload_to_cpu \
+    --mode windowed \
+    --window_size 64 \
+    --overlap_size 16
+
 
 '''
 
