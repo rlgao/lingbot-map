@@ -80,7 +80,7 @@ pip install -e ".[vis]"
 
 | Model Name | Huggingface Repository | ModelScope Repository | Description |
 | :--- | :--- | :--- | :--- |
-| lingbot-map | [robbyant/lingbot-map](https://huggingface.co/robbyant/lingbot-map) | [Robbyant/lingbot-map](https://www.modelscope.cn/models/Robbyant/lingbot-map) | Balanced checkpoint used in the paper and demo — strong all-around performance across short and long sequences. |
+| lingbot-map | [robbyant/lingbot-map](https://huggingface.co/robbyant/lingbot-map) | [Robbyant/lingbot-map](https://www.modelscope.cn/models/Robbyant/lingbot-map) | Balanced and latest checkpoint — strong all-around performance across short and long sequences. |
 | lingbot-map-long | [robbyant/lingbot-map](https://huggingface.co/robbyant/lingbot-map) | [Robbyant/lingbot-map](https://www.modelscope.cn/models/Robbyant/lingbot-map) | Better suited for long sequences. |
 | lingbot-map-stage1 | [robbyant/lingbot-map](https://huggingface.co/robbyant/lingbot-map) | [Robbyant/lingbot-map](https://www.modelscope.cn/models/Robbyant/lingbot-map) | Stage-1 training checkpoint of lingbot-map — can be loaded into the VGGT model for bidirectional inference. |
 
@@ -92,20 +92,24 @@ Run `demo.py` for interactive 3D visualization via a browser-based [viser](https
 
 ### Try the Example Scenes
 
-We provide three example scenes in `example/` that you can run out of the box:
+We provide four example scenes in `example/` that you can run out of the box:
 
 ```bash
 # Church scene
-python demo.py --model_path /path/to/checkpoint.pt \
+python demo.py --model_path /path/to/lingbot-map.pt \
     --image_folder example/church --mask_sky
 
-# Oxford scene with sky masking (outdoor)
-python demo.py --model_path /path/to/checkpoint.pt \
-    --image_folder example/oxford --mask_sky
-
 # University scene
-python demo.py --model_path /path/to/checkpoint.pt \
-    --image_folder example/university4 --mask_sky
+python demo.py --model_path /path/to/lingbot-map.pt \
+    --image_folder example/university --mask_sky
+
+# Loop scene (loop closure trajectory)
+python demo.py --model_path /path/to/lingbot-map.pt \
+    --image_folder example/loop
+
+# Oxford scene with sky masking (outdoor, large scale scene)
+python demo.py --model_path /path/to/lingbot-map-long.pt \
+    --image_folder example/oxford --mask_sky
 ```
 
 ### Streaming Inference from Images
@@ -124,7 +128,7 @@ python demo.py --model_path /path/to/checkpoint.pt \
 
 ### Streaming with Keyframe Interval
 
-Use `--keyframe_interval` to reduce KV cache memory by only keeping every N-th frame as a keyframe. Non-keyframe frames still produce predictions but are not stored in the cache. This is useful for long sequences which exceed 320 frames.
+Use `--keyframe_interval` to reduce KV cache memory by only keeping every N-th frame as a keyframe. Non-keyframe frames still produce predictions but are not stored in the cache. This is useful for long sequences which exceed 320 frames (We train with video RoPE on 320 views, so performance degrades when the KV cache stores more than 320 views. Using a keyframe strategy allows inference over longer sequences.).
 
 ```bash
 python demo.py --model_path /path/to/checkpoint.pt \
@@ -136,7 +140,7 @@ python demo.py --model_path /path/to/checkpoint.pt \
 ```bash
 python demo.py --model_path /path/to/checkpoint.pt \
     --video_path video.mp4 --fps 10 \
-    --mode windowed --window_size 64
+    --mode windowed --window_size 128
 ```
 
 
@@ -193,6 +197,17 @@ If you run into out-of-memory issues, try one (or both) of the following:
 
 - **`--offload_to_cpu`** — offload per-frame predictions to CPU during inference (on by default; use `--no-offload_to_cpu` only if you have memory to spare).
 - **`--num_scale_frames 2`** — reduce the number of bidirectional scale frames from the default 8 down to 2, which shrinks the activation peak of the initial scale phase.
+
+### Faster Inference
+
+Lower the number of iterative refinement steps in the camera head to trade a small amount of pose accuracy for wall-clock speed:
+
+```bash
+python demo.py --model_path /path/to/checkpoint.pt \
+    --image_folder /path/to/images/ --camera_num_iterations 1
+```
+
+`--camera_num_iterations` defaults to `4`; setting it to `1` skips three refinement passes in the camera head (and shrinks its KV cache by 4×).
 
 # 📜 License
 

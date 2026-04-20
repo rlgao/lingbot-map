@@ -122,6 +122,7 @@ def load_model(args, device):
         kv_cache_cross_frame_special=True,
         kv_cache_include_scale_frames=True,
         use_sdpa=args.use_sdpa,
+        camera_num_iterations=args.camera_num_iterations,
     )
 
     if args.model_path:
@@ -303,16 +304,19 @@ def main():
     parser.add_argument(
         "--keyframe_interval",
         type=int,
-        default=1,
-        help="Streaming only. Every N-th frame after scale frames is kept as a keyframe. 1 = every frame.",
+        default=None,
+        help="Streaming only. Every N-th frame after scale frames is kept as a keyframe. 1 = every frame. "
+             "If unset, auto-selected: 1 when num_frames <= 320, else ceil(num_frames / 320).",
     )
     parser.add_argument("--kv_cache_sliding_window", type=int, default=64)
+    parser.add_argument("--camera_num_iterations", type=int, default=4,
+                        help="Camera head iterative-refinement steps. Default 4; set 1 for faster inference "
+                             "(skips 3 refinement passes at a small accuracy cost).")
     parser.add_argument("--use_sdpa", action="store_true", default=False,
                         help="Use SDPA backend (no flashinfer needed). Default: FlashInfer")
     parser.add_argument(
         "--offload_to_cpu",
         action=argparse.BooleanOptionalAction,
-        default=True,
         help="Offload per-frame predictions to CPU during inference to cut GPU peak memory. "
              "Use --no-offload_to_cpu to keep outputs on GPU.",
     )
@@ -392,6 +396,16 @@ def main():
         )
     else:
         print("No GPU available")
+
+    if args.keyframe_interval is None:
+        if args.mode == "streaming" and num_frames > 320:
+            args.keyframe_interval = (num_frames + 319) // 320
+            print(
+                f"Auto-selected --keyframe_interval={args.keyframe_interval} "
+                f"(num_frames={num_frames} > 320)."
+            )
+        else:
+            args.keyframe_interval = 1
 
     if args.mode != "streaming" and args.keyframe_interval != 1:
         print("Warning: --keyframe_interval only applies to --mode streaming. Ignoring it for windowed inference.")
