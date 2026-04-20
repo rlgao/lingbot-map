@@ -1,3 +1,18 @@
+From upstream (original repo):
+
+```bash
+git fetch upstream
+git merge upstream/main
+```
+
+To my repo:
+
+```bash
+git push
+```
+
+---
+
 <div align="center">
   <img src="assets/teaser.png" width="100%">
 
